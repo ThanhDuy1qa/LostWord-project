@@ -1,9 +1,9 @@
+import React from 'react';
 import { useEditStoryCard } from '../hooks/useEditStoryCard';
 import { getStoryCardImageUrl } from '../utils/storyCardUtils';
 
 const EditStoryCard = () => {
   const {
-    handleAutoFill,
     formData, message, loading, currentIndex, allCardsList, originalImageUrl, saveAction,
     setSaveAction, handleNavigate, handleChange, handleSubmit, navigate, effectDict,
     isRandomStat, setIsRandomStat, randomRange, setRandomRange, stat1, setStat1, stat2, setStat2,
@@ -15,119 +15,208 @@ const EditStoryCard = () => {
   if (loading) return <div className="text-white text-center mt-20">Đang tải...</div>;
 
   const getIconUrl = (effCode, direction) => {
-      if(!effCode) return null;
-      const dictItem = effectDict.find(d => d.effect_code === effCode);
-      if(!dictItem) return null;
-      return direction === 'UP' ? dictItem.icon_up_url : dictItem.icon_down_url;
+    if (!effCode) return null;
+    const dictItem = effectDict.find(d => d.effect_code === effCode);
+    if (!dictItem) return null;
+    const rawUrl = direction === 'UP' ? dictItem.icon_up_url : dictItem.icon_down_url;
+    if (!rawUrl) return null;
+    return rawUrl.endsWith('.webp') ? rawUrl : `${rawUrl}.webp`;
   };
 
   const handleFocus = (e) => e.target.select();
 
+  // 1. Tìm tên Nhân vật đã được nhập ở dòng bất kỳ trong thẻ
+  const activeLockedChar = 
+    baseEffects.find(e => e.character_lock && e.character_lock.trim() !== '')?.character_lock ||
+    luckGroups.flatMap(g => g).find(e => e.character_lock && e.character_lock.trim() !== '')?.character_lock ||
+    '';
+
+  // 2. Kiểm tra xem trong toàn bộ thẻ đã có dòng nào khóa NV hay chưa
+  const hasAnyCharLock = Boolean(activeLockedChar) || 
+    baseEffects.some(e => e.role_lock === 'CHAR') || 
+    luckGroups.some(g => g.some(e => e.role_lock === 'CHAR'));
+
   const renderEffectRow = (eff, onChange, onRemove, rowKey) => {
-      const iconSrc = getIconUrl(eff.effect_code, eff.direction);
-      const uniqueGroups = [...new Set(effectDict.map(d => d.effect_group).filter(Boolean))];
-      const currentGroup = eff.ui_group || (eff.effect_code ? effectDict.find(d => d.effect_code === eff.effect_code)?.effect_group : '');
-      const isBuff = currentGroup === 'Status Buff';
-      const isModifier = currentGroup === 'Bullet Modifier' || currentGroup === 'Elemental Modifier';
-      const isSpiritPowerUp = eff.effect_code === 'SPIRIT_POWER_UP';
+    const iconSrc = getIconUrl(eff.effect_code, eff.direction);
+    const uniqueGroups = [...new Set(effectDict.map(d => d.effect_group).filter(Boolean))];
+    const currentGroup = eff.ui_group || (eff.effect_code ? effectDict.find(d => d.effect_code === eff.effect_code)?.effect_group : '');
+    const isBuff = currentGroup === 'Status Buff';
+    const isModifier = currentGroup === 'Bullet Modifier' || currentGroup === 'Elemental Modifier';
+    const isSpiritPowerUp = eff.effect_code === 'SPIRIT_POWER_UP';
 
-      const handleDirectionChange = (e) => {
-          const newDir = e.target.value;
-          onChange('direction', newDir);
-          
-          if (currentGroup === 'Status Buff') {
-              if (newDir === 'DOWN') {
-                  onChange('target', 'ENEMY');
-              } else if (newDir === 'UP' && eff.target === 'ENEMY') {
-                  onChange('target', 'SELF');
-              }
-          }
-      };
+    const isCharLocked = eff.role_lock === 'CHAR' || Boolean(eff.character_lock);
 
-      const handleEffectCodeChange = (e) => {
-          const newCode = e.target.value;
-          onChange('effect_code', newCode);
-          
-          const dictItem = effectDict.find(d => d.effect_code === newCode);
-          if (dictItem && dictItem.effect_group === 'Status Buff' && eff.direction === 'DOWN') {
-              onChange('target', 'ENEMY');
-          }
-      };
+    // Bật tùy chọn Khóa NV cho mọi nhóm hiệu ứng nếu đây là Status Buff HOẶC thẻ này đã có ít nhất 1 dòng Khóa NV
+    const canShowCharLock = isBuff || hasAnyCharLock || isCharLocked;
 
-      return (
-        <div key={rowKey} className="flex flex-nowrap gap-3 items-center justify-center bg-[#25252d] p-2.5 rounded border border-gray-600 relative overflow-hidden group">
-          <div className="w-8 h-8 flex-shrink-0 bg-gray-800 rounded flex items-center justify-center border border-gray-600 overflow-hidden">
-              {iconSrc ? <img src={`${iconSrc}.webp`} alt="Icon" className="w-full h-full object-contain" onError={(e) => {e.target.style.display='none'}}/> : <span className="text-xs text-gray-500">?</span>}
-          </div>
+    const handleDirectionChange = (e) => {
+      const newDir = e.target.value;
+      onChange('direction', newDir);
+      
+      if (currentGroup === 'Status Buff') {
+        if (newDir === 'DOWN') {
+          onChange('target', 'ENEMY');
+        } else if (newDir === 'UP' && eff.target === 'ENEMY') {
+          onChange('target', 'SELF');
+        }
+      }
+    };
 
-          <select value={currentGroup} onChange={(e) => onChange('ui_group', e.target.value)} className="w-[140px] flex-shrink-0 bg-[#0f0f12] border border-gray-600 rounded p-1.5 focus:border-[#419ec0] outline-none text-sm text-gray-300">
-            <option value="">-- Chọn Nhóm --</option>
-            {uniqueGroups.map(groupName => <option key={groupName} value={groupName}>{groupName}</option>)}
-          </select>
+    const handleEffectCodeChange = (e) => {
+      const newCode = e.target.value;
+      onChange('effect_code', newCode);
+      
+      const dictItem = effectDict.find(d => d.effect_code === newCode);
+      if (dictItem && dictItem.effect_group === 'Status Buff' && eff.direction === 'DOWN') {
+        onChange('target', 'ENEMY');
+      }
+    };
 
-          <select value={eff.effect_code} onChange={handleEffectCodeChange} disabled={!currentGroup} className={`flex-grow min-w-[150px] max-w-[250px] bg-[#0f0f12] border border-gray-600 rounded p-1.5 outline-none text-sm text-[#419ec0] font-semibold ${!currentGroup ? 'opacity-50 cursor-not-allowed' : 'focus:border-[#419ec0]'}`}>
-            <option value="">-- Chọn Hiệu ứng --</option>
-            {effectDict.filter(d => d.effect_group === currentGroup).map(dict => <option key={dict.effect_code} value={dict.effect_code} className="text-white">{dict.effect_name}</option>)}
-          </select>
-
-          {currentGroup === 'Tag Modifier' ? (
-             <input type="text" placeholder="Tag (VD: Tengu)" value={eff.tag || ''} onChange={(e) => onChange('tag', e.target.value)} className="w-[110px] flex-shrink-0 bg-blue-900/30 border border-blue-500 rounded p-1.5 outline-none text-sm text-center text-blue-300 placeholder-blue-700 focus:bg-[#0f0f12]" />
+    return (
+      <div key={rowKey} className="flex flex-wrap lg:flex-nowrap gap-2 items-center justify-between bg-[#25252d] p-2.5 rounded border border-gray-600 relative overflow-hidden group">
+        
+        {/* ICON */}
+        <div className="w-8 h-8 flex-shrink-0 bg-gray-800 rounded flex items-center justify-center border border-gray-600 overflow-hidden">
+          {iconSrc ? (
+            <img src={iconSrc} alt="Icon" className="w-full h-full object-contain" onError={(e) => { e.target.style.display = 'none'; }} />
           ) : (
-             <select value={eff.role_lock || 'ALL'} onChange={(e) => onChange('role_lock', e.target.value)} disabled={!isBuff} title={!isBuff ? "Chỉ áp dụng cho Status Buff" : "Khóa Class nhận Buff"} className={`w-[110px] flex-shrink-0 bg-[#0f0f12] border border-gray-600 rounded p-1.5 outline-none text-sm text-center ${!isBuff ? 'opacity-30 cursor-not-allowed' : 'focus:border-[#419ec0] text-pink-400'}`}>
-                <option value="ALL">Mọi Class</option> <option value="Attack">ATK ONLY</option> <option value="Defense">DEF ONLY</option> <option value="Support">SUP ONLY</option> <option value="Heal">HEAL ONLY</option> <option value="Speed">SPD ONLY</option> <option value="Destroy">DES ONLY</option> <option value="Technical">TEC ONLY</option> <option value="Debuff">DBF ONLY</option>
-             </select>
-          )}
-
-          <select value={eff.direction || 'UP'} onChange={handleDirectionChange} className="w-[100px] flex-shrink-0 bg-[#0f0f12] border border-gray-600 rounded p-1.5 focus:border-[#419ec0] outline-none text-sm text-center">
-            <option value="UP">Tăng(UP)</option><option value="DOWN">Giảm(DW)</option>
-          </select>
-
-          <div className="flex items-center gap-1.5 w-[85px] flex-shrink-0">
-            <span className="text-[11px] text-gray-400 leading-tight">Trị<br/>số:</span>
-            <input 
-              type="number" 
-              value={eff.value !== undefined ? eff.value : ''} 
-              onFocus={handleFocus} 
-              step={isModifier ? 5 : (isSpiritPowerUp ? 0.1 : 1)} 
-              onChange={(e) => onChange('value', e.target.value)} 
-              className="w-full bg-[#0f0f12] border border-gray-600 rounded p-1.5 focus:border-[#419ec0] outline-none text-sm text-center font-bold" 
-            />
-          </div>
-
-          <select value={eff.target || 'SELF'} onChange={(e) => onChange('target', e.target.value)} className="w-[110px] flex-shrink-0 bg-[#0f0f12] border border-gray-600 rounded p-1.5 focus:border-[#419ec0] outline-none text-sm text-center">
-            <option value="SELF">Bản thân</option><option value="TARGET">Mục tiêu</option><option value="PARTY">Toàn Đội</option><option value="ENEMY">Toàn Địch</option>
-          </select>
-
-          <div className="flex items-center gap-1.5 w-[80px] flex-shrink-0">
-            <span className="text-xs text-gray-400">Turn:</span>
-            <input type="number" value={eff.duration || 1} onFocus={handleFocus} onChange={(e) => onChange('duration', parseInt(e.target.value) || 0)} className="w-full bg-[#0f0f12] border border-gray-600 rounded p-1.5 focus:border-[#419ec0] outline-none text-sm text-center" />
-          </div>
-
-          {onRemove && (
-            <button type="button" onClick={onRemove} className="flex-shrink-0 bg-red-900/50 hover:bg-red-600 text-red-200 hover:text-white px-2.5 py-1.5 rounded transition-colors opacity-50 hover:opacity-100" title="Xóa">✕</button>
+            <span className="text-xs text-gray-500">?</span>
           )}
         </div>
-      );
+
+        {/* NHÓM HIỆU ỨNG */}
+        <select value={currentGroup} onChange={(e) => onChange('ui_group', e.target.value)} className="w-[125px] flex-shrink-0 bg-[#0f0f12] border border-gray-600 rounded p-1.5 focus:border-[#419ec0] outline-none text-xs text-gray-300">
+          <option value="">-- Chọn Nhóm --</option>
+          {uniqueGroups.map(groupName => <option key={groupName} value={groupName}>{groupName}</option>)}
+        </select>
+
+        {/* MÃ HIỆU ỨNG */}
+        <select value={eff.effect_code} onChange={handleEffectCodeChange} disabled={!currentGroup} className={`flex-grow min-w-[130px] bg-[#0f0f12] border border-gray-600 rounded p-1.5 outline-none text-xs text-[#419ec0] font-semibold ${!currentGroup ? 'opacity-50 cursor-not-allowed' : 'focus:border-[#419ec0]'}`}>
+          <option value="">-- Chọn Hiệu ứng --</option>
+          {effectDict
+            .filter(d => d.effect_group === currentGroup)
+            .sort((a, b) => {
+              const aIsRank2 = a.effect_code.endsWith('_II') || a.effect_name.includes(' II');
+              const bIsRank2 = b.effect_code.endsWith('_II') || b.effect_name.includes(' II');
+              
+              if (aIsRank2 && !bIsRank2) return 1;
+              if (!aIsRank2 && bIsRank2) return -1;
+              
+              return a.effect_name.localeCompare(b.effect_name);
+            })
+            .map(dict => (
+              <option key={dict.effect_code} value={dict.effect_code} className="text-white">
+                {dict.effect_name}
+              </option>
+            ))
+          }
+        </select>
+
+        {/* KHÓA CLASS / KHÓA NV */}
+        {currentGroup === 'Tag Modifier' ? (
+          <input type="text" placeholder="Tag (VD: Tengu)" value={eff.tag || ''} onChange={(e) => onChange('tag', e.target.value)} className="w-[110px] flex-shrink-0 bg-blue-900/30 border border-blue-500 rounded p-1.5 outline-none text-xs text-center text-blue-300 placeholder-blue-700 focus:bg-[#0f0f12]" />
+        ) : (
+          <div className="flex items-center gap-1 flex-shrink-0">
+            <select 
+              value={isCharLocked ? 'CHAR' : (eff.role_lock || 'ALL')} 
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val === 'CHAR') {
+                  onChange('role_lock', 'CHAR');
+                  // Tự động sao chép tên nhân vật từ dòng khác sang nếu có
+                  if (!eff.character_lock && activeLockedChar) {
+                    onChange('character_lock', activeLockedChar);
+                  }
+                } else {
+                  onChange('role_lock', val);
+                  onChange('character_lock', '');
+                }
+              }} 
+              disabled={!isBuff && !canShowCharLock} 
+              className={`w-[105px] bg-[#0f0f12] border border-gray-600 rounded p-1.5 outline-none text-xs text-center ${
+                !isBuff && !canShowCharLock ? 'opacity-30 cursor-not-allowed' : 'focus:border-[#419ec0]'
+              } ${isCharLocked ? 'text-purple-400 font-bold border-purple-500' : 'text-pink-400'}`}
+            >
+              {isBuff ? (
+                <>
+                  <option value="ALL">Mọi Class</option>
+                  <option value="Attack">ATK ONLY</option>
+                  <option value="Defense">DEF ONLY</option>
+                  <option value="Support">SUP ONLY</option>
+                  <option value="Heal">HEAL ONLY</option>
+                  <option value="Speed">SPD ONLY</option>
+                  <option value="Destroy">DES ONLY</option>
+                  <option value="Technical">TEC ONLY</option>
+                  <option value="Debuff">DBF ONLY</option>
+                  <option value="CHAR">👤 KHÓA NV</option>
+                </>
+              ) : (
+                <>
+                  <option value="ALL">Mọi Class</option>
+                  {canShowCharLock && <option value="CHAR">👤 KHÓA NV</option>}
+                </>
+              )}
+            </select>
+
+            {isCharLocked && (
+              <input 
+                type="text" 
+                placeholder="Tên NV (VD: L80 Parsee)" 
+                value={eff.character_lock || ''} 
+                onChange={(e) => onChange('character_lock', e.target.value)} 
+                className="w-[120px] bg-purple-900/40 border border-purple-500 rounded p-1.5 outline-none text-xs text-center text-purple-200 placeholder-purple-500 focus:bg-[#0f0f12] font-semibold" 
+              />
+            )}
+          </div>
+        )}
+
+        {/* HƯỚNG TĂNG/GIẢM */}
+        <select value={eff.direction || 'UP'} onChange={handleDirectionChange} className="w-[85px] flex-shrink-0 bg-[#0f0f12] border border-gray-600 rounded p-1.5 focus:border-[#419ec0] outline-none text-xs text-center">
+          <option value="UP">Tăng(UP)</option>
+          <option value="DOWN">Giảm(DW)</option>
+        </select>
+
+        {/* TRỊ SỐ */}
+        <div className="flex items-center gap-1 w-[70px] flex-shrink-0">
+          <span className="text-[10px] text-gray-400 leading-none">Trị số:</span>
+          <input 
+            type="number" 
+            value={eff.value !== undefined ? eff.value : ''} 
+            onFocus={handleFocus} 
+            step={isModifier ? 5 : (isSpiritPowerUp ? 0.05 : 1)} 
+            onChange={(e) => onChange('value', e.target.value)} 
+            className="w-full bg-[#0f0f12] border border-gray-600 rounded p-1 focus:border-[#419ec0] outline-none text-xs text-center font-bold" 
+          />
+        </div>
+
+        {/* MỤC TIÊU */}
+        <select value={eff.target || 'SELF'} onChange={(e) => onChange('target', e.target.value)} className="w-[95px] flex-shrink-0 bg-[#0f0f12] border border-gray-600 rounded p-1.5 focus:border-[#419ec0] outline-none text-xs text-center">
+          <option value="SELF">Bản thân</option>
+          <option value="TARGET">Mục tiêu</option>
+          <option value="PARTY">Toàn Đội</option>
+          <option value="ENEMY">Toàn Địch</option>
+        </select>
+
+        {/* SỐ TURN */}
+        <div className="flex items-center gap-1 w-[65px] flex-shrink-0">
+          <span className="text-[10px] text-gray-400">Turn:</span>
+          <input type="number" value={eff.duration || 1} onFocus={handleFocus} onChange={(e) => onChange('duration', parseInt(e.target.value) || 0)} className="w-full bg-[#0f0f12] border border-gray-600 rounded p-1 focus:border-[#419ec0] outline-none text-xs text-center" />
+        </div>
+
+        {/* NÚT XÓA */}
+        {onRemove && (
+          <button type="button" onClick={onRemove} className="flex-shrink-0 bg-red-900/50 hover:bg-red-600 text-red-200 hover:text-white px-2 py-1 rounded transition-colors" title="Xóa dòng này">✕</button>
+        )}
+      </div>
+    );
   };
 
   return (
     <div className="min-h-screen bg-[#0f0f12] text-white p-8 flex justify-center items-start">
-      <div className="bg-[#1a1a20] p-8 rounded-xl border border-gray-700 w-full max-w-6xl shadow-2xl flex flex-col gap-6">
+      <div className="bg-[#1a1a20] p-8 rounded-xl border border-gray-700 w-full max-w-7xl shadow-2xl flex flex-col gap-6">
         
         <div className="relative flex flex-col md:block items-center">
           <h2 className="text-3xl font-bold text-[#e1c16e] mb-2 text-center font-serif">❖ Chỉnh Sửa Story Card ❖</h2>
-
-          <button 
-            type="button" 
-            onClick={() => {
-              const ok = handleAutoFill(formData.name);
-              alert(ok ? `✅ Đã tự động điền dữ liệu cho thẻ: "${formData.name}"` : `❌ Không tìm thấy thẻ "${formData.name}" trong file scraped_cards.json!`);
-            }}
-            className="md:absolute right-0 top-1/2 md:-translate-y-1/2 mt-2 md:mt-0 flex items-center gap-1 bg-amber-600 hover:bg-amber-500 active:scale-95 text-white text-xs px-3 py-2 rounded-lg font-bold shadow-md transition-all cursor-pointer"
-            title="Tự động nạp Effect và Stats từ file scraped_cards.json"
-          >
-            ⚡ Điền từ Dữ liệu Cào
-          </button>
 
           {message && <div className="text-center font-bold text-yellow-400 mt-2">{message}</div>}
         </div>
@@ -162,7 +251,6 @@ const EditStoryCard = () => {
 
             <div className="w-full md:w-2/3 flex flex-col gap-4">
               
-              {/* O NHP TÊN CÓ MENU GỢI Ý */}
               <div className="relative">
                 <label className="block text-gray-400 mb-1 text-sm">Tên Thẻ (Name)</label>
                 <input 
@@ -179,7 +267,6 @@ const EditStoryCard = () => {
                   className="w-full bg-[#0f0f12] border border-gray-600 rounded p-2 focus:border-[#419ec0] outline-none" 
                 />
 
-                {/* Danh sách gợi ý từ file scraped_cards.json */}
                 {showSuggestions && suggestions.length > 0 && (
                   <ul className="absolute z-50 left-0 right-0 top-full mt-1 bg-[#1a1a20] border border-gray-600 rounded-md shadow-2xl max-h-60 overflow-y-auto">
                     {suggestions.map((card, idx) => (
@@ -208,7 +295,10 @@ const EditStoryCard = () => {
                   <label className="block text-gray-400 mb-1 text-sm">Loại (Type)</label>
                   <div className="flex items-center gap-2">
                     <select name="type" value={formData.type} onChange={handleChange} className="flex-grow bg-[#0f0f12] border border-gray-600 rounded p-2 focus:border-[#419ec0] outline-none">
-                      <option value="Bamboo">Bamboo</option> <option value="Orchid">Orchid</option> <option value="Chrysanthemum">Chrysanthemum</option> <option value="Plum">Plum</option>
+                      <option value="Bamboo">Bamboo</option>
+                      <option value="Orchid">Orchid</option>
+                      <option value="Chrysanthemum">Chrysanthemum</option>
+                      <option value="Plum">Plum</option>
                     </select>
                     
                     {formData.type && (
@@ -223,7 +313,6 @@ const EditStoryCard = () => {
                               e.target.src = `/image/type/${formData.type}.webp`;
                             } else {
                               e.target.onerror = null;
-                              e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='%236b7280' d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z'/%3E%3C/svg%3E";
                             }
                           }} 
                         />
@@ -238,6 +327,7 @@ const EditStoryCard = () => {
                 <input type="text" name="image_url" value={formData.image_url} onChange={handleChange} required className="w-full bg-[#0f0f12] border border-gray-600 rounded p-2 focus:border-[#419ec0] text-gray-300 outline-none" />
               </div>
 
+              {/* STATS */}
               <div className="mt-4 border-t border-gray-700 pt-4">
                 <div className="flex justify-between items-center mb-3">
                   <h3 className="text-base font-bold text-[#c09641]">Chỉ Số Bổ Sung (Stats)</h3>
@@ -251,7 +341,12 @@ const EditStoryCard = () => {
                   <div className={`flex flex-col ${isRandomStat ? 'gap-5' : 'lg:flex-row gap-4'}`}>
                     <div className={`flex-1 flex flex-col gap-2 bg-[#25252d] p-3 rounded border transition-colors ${isRandomStat ? 'border-pink-700/50 shadow-[0_0_10px_rgba(236,72,153,0.1)]' : 'border-gray-600'}`}>
                       <select value={stat1.type} onChange={(e) => setStat1({...stat1, type: e.target.value})} className="w-full bg-[#0f0f12] border border-gray-600 rounded p-2 focus:border-[#419ec0] outline-none text-sm font-semibold text-gray-200">
-                        <option value="hp">HP</option> <option value="yin_atk">Yin ATK</option> <option value="yang_atk">Yang ATK</option> <option value="yin_def">Yin DEF</option> <option value="yang_def">Yang DEF</option> <option value="agility">Agility</option>
+                        <option value="hp">HP</option>
+                        <option value="yin_atk">Yin ATK</option>
+                        <option value="yang_atk">Yang ATK</option>
+                        <option value="yin_def">Yin DEF</option>
+                        <option value="yang_def">Yang DEF</option>
+                        <option value="agility">Agility</option>
                       </select>
                       <div className="flex items-center gap-2">
                          {isRandomStat && <span className="text-xs text-pink-400 font-mono font-bold w-8">MIN:</span>}
@@ -268,7 +363,12 @@ const EditStoryCard = () => {
 
                     <div className={`flex-1 flex flex-col gap-2 bg-[#25252d] p-3 rounded border transition-colors ${isRandomStat ? 'border-pink-700/50 shadow-[0_0_10px_rgba(236,72,153,0.1)]' : 'border-gray-600'}`}>
                       <select value={stat2.type} onChange={(e) => setStat2({...stat2, type: e.target.value})} className="w-full bg-[#0f0f12] border border-gray-600 rounded p-2 focus:border-[#419ec0] outline-none text-sm font-semibold text-gray-200">
-                        <option value="hp">HP</option> <option value="yin_atk">Yin ATK</option> <option value="yang_atk">Yang ATK</option> <option value="yin_def">Yin DEF</option> <option value="yang_def">Yang DEF</option> <option value="agility">Agility</option>
+                        <option value="hp">HP</option>
+                        <option value="yin_atk">Yin ATK</option>
+                        <option value="yang_atk">Yang ATK</option>
+                        <option value="yin_def">Yin DEF</option>
+                        <option value="yang_def">Yang DEF</option>
+                        <option value="agility">Agility</option>
                       </select>
                       <div className="flex items-center gap-2">
                          {isRandomStat && <span className="text-xs text-pink-400 font-mono font-bold w-8">MIN:</span>}

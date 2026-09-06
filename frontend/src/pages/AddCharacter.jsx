@@ -1,7 +1,11 @@
+// src/components/AddCharacter.jsx
 import { useAddCharacter } from '../hooks/useAddCharacter';
+
 const AddCharacter = () => {
-  // Gọi logic từ hook
-  const { formData, message, handleChange, handleSubmit } = useAddCharacter();
+  const { 
+    formData, message, showSuggestions, filteredNames,
+    setShowSuggestions, handleChange, handleSelectName, handleSubmit 
+  } = useAddCharacter();
 
   return (
     <div className="min-h-screen bg-[#0f0f12] text-white p-8 flex justify-center items-center">
@@ -13,11 +17,36 @@ const AddCharacter = () => {
         {message && <div className="mb-4 text-center font-bold text-green-400">{message}</div>}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Nhập Tên */}
-          <div>
+          
+          {/* 🌟 1. Ô Nhập Tên có Gợi Ý */}
+          <div className="relative">
             <label className="block text-gray-400 mb-1 text-sm">Tên Nhân Vật (Name)</label>
-            <input type="text" name="name" value={formData.name} onChange={handleChange} required
-              className="w-full bg-[#0f0f12] border border-gray-600 rounded p-2 focus:border-[#c09641] outline-none transition-colors" />
+            <input 
+              type="text" 
+              name="name" 
+              value={formData.name} 
+              onChange={handleChange} 
+              required 
+              autoComplete="off"
+              onFocus={() => setShowSuggestions(true)}
+              onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+              className="w-full bg-[#0f0f12] border border-gray-600 rounded p-2 focus:border-[#c09641] outline-none transition-colors" 
+            />
+
+            {/* Menu Gợi Ý Dropdown */}
+            {showSuggestions && formData.name && filteredNames.length > 0 && (
+              <ul className="absolute z-50 w-full bg-[#25252d] border border-gray-600 mt-1 max-h-48 overflow-y-auto rounded shadow-xl">
+                {filteredNames.map((n, index) => (
+                  <li 
+                    key={index} 
+                    onMouseDown={() => handleSelectName(n)}
+                    className="p-2 hover:bg-[#c09641] hover:text-black cursor-pointer transition-colors border-b border-gray-700 last:border-none"
+                  >
+                    {n}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
 
           <div className="flex gap-4">
@@ -65,7 +94,7 @@ const AddCharacter = () => {
           {/* Nhập URL ảnh */}
           <div>
             <label className="block text-gray-400 mb-1 text-sm">Đường Dẫn Ảnh DB (Image URL)</label>
-            <input type="text" name="image_url" value={formData.image_url} onChange={handleChange} required placeholder="/image/friend/Reimu_L1"
+            <input type="text" name="image_url" value={formData.image_url} onChange={handleChange} required placeholder="/image/friend/Reimu"
               className="w-full bg-[#0f0f12] border border-gray-600 rounded p-2 focus:border-[#c09641] outline-none transition-colors" />
           </div>
 

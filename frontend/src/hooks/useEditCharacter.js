@@ -70,18 +70,14 @@ export const useEditCharacter = () => {
     setFormData(prev => {
       const updated = { ...prev, [name]: value };
 
-      if (name === 'name') {
-        const formattedName = value.trim().replace(/\s+/g, '_');
-        if (prev.image_url) {
-          const lastSlashIndex = prev.image_url.lastIndexOf('/');
-          if (lastSlashIndex !== -1) {
-            const basePath = prev.image_url.substring(0, lastSlashIndex + 1);
-            updated.image_url = `${basePath}${formattedName}`;
-          } else {
-            updated.image_url = formattedName;
-          }
-        } else {
-          updated.image_url = `/image/friend/${formattedName}`;
+      if (name === 'name' || name === 'universe') {
+        const cleanName = (name === 'name' ? value : prev.name).trim().replace(/\s+/g, '_');
+        const cleanUniverse = (name === 'universe' ? value : prev.universe).trim().replace(/\s+/g, '_');
+
+        if (cleanName && cleanUniverse) {
+          updated.image_url = `/image/friend/${cleanName}_${cleanUniverse}`;
+        } else if (cleanName) {
+          updated.image_url = `/image/friend/${cleanName}`;
         }
       }
       return updated;
@@ -90,15 +86,17 @@ export const useEditCharacter = () => {
     if (name === 'name') setShowSuggestions(true);
   };
 
+  // 🌟 2. Cập nhật handleSelectName khi click chọn gợi ý tên
   const handleSelectName = (selectedName) => {
     setFormData(prev => {
-      const formattedName = selectedName.replace(/\s+/g, '_');
-      const lastSlashIndex = prev.image_url.lastIndexOf('/');
-      const basePath = lastSlashIndex !== -1 ? prev.image_url.substring(0, lastSlashIndex + 1) : '/image/friend/';
+      const cleanName = selectedName.trim().replace(/\s+/g, '_');
+      const cleanUniverse = prev.universe ? prev.universe.trim().replace(/\s+/g, '_') : '';
+      const newImageUrl = cleanUniverse ? `/image/friend/${cleanName}_${cleanUniverse}` : `/image/friend/${cleanName}`;
+
       return {
         ...prev,
         name: selectedName,
-        image_url: `${basePath}${formattedName}`
+        image_url: newImageUrl
       };
     });
     setShowSuggestions(false);

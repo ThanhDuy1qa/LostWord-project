@@ -32,9 +32,19 @@ const getAllFriends = async (req, res) => {
 };
 
 // 2. Thêm nhân vật
+// backend/controllers/friendController.js
+
+// 2. Thêm nhân vật (Cập nhật tự động tạo thư mục vũ trụ)
 const addFriend = async (req, res) => {
   try {
     const { name, rarity_code, universe, role, image_url } = req.body;
+
+    // 🌟 Tự động tạo thư mục Vũ trụ nếu chưa tồn tại
+    if (universe) {
+      const folderName = mapFolder(universe);
+      const universeDirPath = path.join(ROOT_DIR, folderName);
+      await fs.mkdir(universeDirPath, { recursive: true });
+    }
 
     await pool.query(
       'INSERT INTO Friend (name, rarity_code, universe, role, image_url) VALUES (?, ?, ?, ?, ?)',

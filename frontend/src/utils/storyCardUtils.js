@@ -1,18 +1,14 @@
 // src/utils/storyCardUtils.js
+import { sanitizePathString } from './pathSanitizer';
 
 export const getStoryCardImageUrl = (imageUrlRaw) => {
   if (!imageUrlRaw) return '/image/storycard/default.webp';
 
   const rawPath = String(imageUrlRaw).trim();
-  let fileName = rawPath.split('/').pop().trim();
+  const rawFileName = rawPath.split('/').pop().trim().replace(/\.webp$/i, '');
 
-  // Bỏ đuôi .webp nếu lỡ dính sẵn trong DB
-  fileName = fileName.replace(/\.webp$/i, '');
-
-  // 🌟 Chuyển dấu '#' thành '_hash_' an toàn 100%
-  const safeFileName = fileName.replaceAll('#', 'hash_'); 
-  // (Nếu file bạn đặt là Report_hash_1.webp thì thay '#' thành 'hash_')
-  // (Nếu file bạn đặt là Report__hash_1.webp thì thay '#' thành '_hash_')
+  // Lọc an toàn toàn bộ ký tự ?, !, #, :, v.v.
+  const safeFileName = sanitizePathString(rawFileName);
 
   return `/image/storycard/${safeFileName}.webp`;
 };
