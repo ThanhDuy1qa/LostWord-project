@@ -1,0 +1,24 @@
+npx npkill -sort "size"
+
+backen
+npx npkill -sort "size"
+npm init -y
+npm install express cors dotenv @prisma/client
+npm install -D prisma nodemon
+
+npx prisma init
+npx prisma generate
+npm install mariadb @prisma/adapter-mariadb
+
+thư mục gốc
+npm create vite@latest frontend -- --template react
+frontend
+npm install axios lucide-react
+npm install
+npm install axios
+npm install -D tailwindcss postcss autoprefixer
+npx tailwindcss init -p
+
+chạy
+npx nodemon server.js
+npm run dev

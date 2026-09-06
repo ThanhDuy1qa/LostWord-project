@@ -2,7 +2,8 @@
 node_modules/
 frontend/node_modules/
 backend/node_modules/
-
+craw/
+frontend/src/data/
 # 2. File chứa cấu hình nhạy cảm, mật khẩu Database (BẢO MẬT)
 .env
 .env.local

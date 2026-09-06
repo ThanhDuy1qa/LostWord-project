@@ -1,4 +1,3 @@
-
 import { useAddCharacter } from '../hooks/useAddCharacter';
 const AddCharacter = () => {
   // Gọi logic từ hook
@@ -34,6 +33,8 @@ const AddCharacter = () => {
                 <option value="EPIC">Epic</option>
                 <option value="GENIC">Genic</option>
                 <option value="EXFes">EX Festival</option>
+                <option value="YUKKURI">Yukkuri</option>
+                <option value="PURE">PURE Festival</option>
               </select>
             </div>
 

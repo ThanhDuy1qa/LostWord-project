@@ -71,8 +71,16 @@ const ManageStoryCards = () => {
                       <td className="p-4 text-center text-gray-400 font-mono">{card.storycard_id}</td>
                       <td className="p-4 text-center">
                         <div className="w-16 h-12 mx-auto bg-black rounded overflow-hidden border border-gray-600">
-                          <img src={`${card.image_url}.webp`} alt={card.name} className="w-full h-full object-cover"
-                            onError={(e) => { e.target.src = 'https://via.placeholder.com/64x48?text=Err'; }} />
+                          {/* 🌟 Thay bằng card.display_image_url và dùng Inline SVG offline chống lỗi ERR_CONNECTION_CLOSED */}
+                          <img 
+                            src={card.display_image_url} 
+                            alt={card.name} 
+                            className="w-full h-full object-cover"
+                            onError={(e) => { 
+                              e.target.onerror = null; 
+                              e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='48' viewBox='0 0 64 48'%3E%3Crect width='64' height='48' fill='%231a1a20'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%236b7280' font-size='10'%3ENo Img%3C/text%3E%3C/svg%3E"; 
+                            }} 
+                          />
                         </div>
                       </td>
                       <td className="p-4 font-bold text-[#e1c16e]">{card.name}</td>

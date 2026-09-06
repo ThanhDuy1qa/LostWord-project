@@ -26,7 +26,7 @@ export const getRoleIconUrl = (role) => {
   const roleMap = {
     'Attack': 'ATK',
     'Defense': 'DEF',
-    'Support': 'SUP',
+    'Support': 'SUPP',
     'Heal': 'HEAL',
     'Speed': 'SPD',
     'Destroy': 'DEST',

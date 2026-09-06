@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+// 🌟 1. Import hàm chuyển đổi URL ảnh an toàn
+import { getStoryCardImageUrl } from '../utils/storyCardUtils';
 
 export const useManageStoryCards = () => {
   const [cards, setCards] = useState([]);
@@ -45,36 +47,48 @@ export const useManageStoryCards = () => {
 
   const handleOrderBlur = async (id, newOrder) => {
     try {
-      await axios.patch(`http://localhost:5000/api/storycards/${id}/order`, { sort_order: newOrder || 999 });
+      await axios.patch(`http://localhost:5000/api/storycards/${id}/order`, { 
+        sort_order: newOrder === '' ? 999 : (Number(newOrder) ?? 999) 
+      });
     } catch (error) {
       setMessage('❌ Không thể lưu thứ tự!');
     }
   };
 
+  // 🌟 2. Lọc an toàn (tránh lỗi crash khi field bị null/undefined)
   let filteredCards = cards.filter(card => 
-    card.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    card.type.toLowerCase().includes(searchTerm.toLowerCase())
+    (card.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (card.type || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // 2. LOGIC MỚI: Sắp xếp dựa trên sortOption
+  // 🌟 3. Sắp xếp chính xác (sử dụng ?? thay cho || để không nuốt mất số 0)
   filteredCards = filteredCards.sort((a, b) => {
     if (sortOption === 'id') {
-      return a.storycard_id - b.storycard_id; // Tăng dần theo ID
+      return a.storycard_id - b.storycard_id;
     } else if (sortOption === 'name') {
-      return a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' });
-    } else { // Mặc định là 'order'
-      // Sắp xếp theo sort_order, nếu sort_order bằng nhau thì ưu tiên ID nhỏ hơn
-      if (a.sort_order === b.sort_order) {
+      return (a.name || '').localeCompare(b.name || '', undefined, { numeric: true, sensitivity: 'base' });
+    } else { 
+      const orderA = a.sort_order ?? 999;
+      const orderB = b.sort_order ?? 999;
+
+      if (orderA === orderB) {
          return a.storycard_id - b.storycard_id; 
       }
-      return (a.sort_order || 999) - (b.sort_order || 999); 
+      return orderA - orderB; 
     }
   });
 
+  // 🌟 4. Gắn thuộc tính display_image_url đã qua xử lý dấu '#' -> 'hash_'
+  const formattedCards = filteredCards.map(card => ({
+    ...card,
+    display_image_url: getStoryCardImageUrl(card.image_url)
+  }));
+
   return {
     searchTerm, setSearchTerm, 
-    sortOption, setSortOption, // Xuất thêm State này ra
-    loading, message, filteredCards,
+    sortOption, setSortOption, 
+    loading, message, 
+    filteredCards: formattedCards, // Trả về danh sách đã có URL ảnh chuẩn
     handleDelete, handleOrderChangeLocal, handleOrderBlur
   };
 };

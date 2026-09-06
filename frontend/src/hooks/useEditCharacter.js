@@ -66,13 +66,41 @@ export const useEditCharacter = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+
+    setFormData(prev => {
+      const updated = { ...prev, [name]: value };
+
+      if (name === 'name') {
+        const formattedName = value.trim().replace(/\s+/g, '_');
+        if (prev.image_url) {
+          const lastSlashIndex = prev.image_url.lastIndexOf('/');
+          if (lastSlashIndex !== -1) {
+            const basePath = prev.image_url.substring(0, lastSlashIndex + 1);
+            updated.image_url = `${basePath}${formattedName}`;
+          } else {
+            updated.image_url = formattedName;
+          }
+        } else {
+          updated.image_url = `/image/friend/${formattedName}`;
+        }
+      }
+      return updated;
+    });
+
     if (name === 'name') setShowSuggestions(true);
   };
 
   const handleSelectName = (selectedName) => {
-    const newImageUrl = `/image/friend/${selectedName.replace(/\s+/g, '_')}`;
-    setFormData(prev => ({ ...prev, name: selectedName, image_url: newImageUrl }));
+    setFormData(prev => {
+      const formattedName = selectedName.replace(/\s+/g, '_');
+      const lastSlashIndex = prev.image_url.lastIndexOf('/');
+      const basePath = lastSlashIndex !== -1 ? prev.image_url.substring(0, lastSlashIndex + 1) : '/image/friend/';
+      return {
+        ...prev,
+        name: selectedName,
+        image_url: `${basePath}${formattedName}`
+      };
+    });
     setShowSuggestions(false);
   };
 

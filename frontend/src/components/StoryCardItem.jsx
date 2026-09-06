@@ -1,14 +1,14 @@
 import { memo } from 'react';
+// 🌟 1. Import hàm helper xử lý ảnh StoryCard
+import { getStoryCardImageUrl } from '../utils/storyCardUtils';
 
 const StoryCardItem = ({ card }) => {
   if (!card) return null;
 
-  // Xử lý đường dẫn ảnh Story Card chính
-  const rawImagePath = card.image_url ? String(card.image_url).trim() : "";
-  const finalImageUrl = encodeURI(rawImagePath);
+  // 🌟 2. Thay thế logic cũ bằng hàm helper (tự động gắn .webp và xử lý dấu #)
+  const finalImageUrl = getStoryCardImageUrl(card.image_url);
 
   // Xử lý đường dẫn ảnh Type (Loại: Bamboo, Orchid, Chrysanthemum, Plum)
-  // Kết quả ví dụ: /image/type/Chrysanthemum.png
   const typeImagePath = card.type ? encodeURI(`/image/type/${card.type.trim()}.png`) : "";
 
   // Tạo dải sao tương ứng với Rarity
@@ -17,7 +17,7 @@ const StoryCardItem = ({ card }) => {
   return (
     <div className="rounded-xl overflow-hidden border-2 border-gray-600 hover:border-yellow-500 transition-all duration-300 relative flex flex-col shadow-lg shadow-black/60 group">
       
-      {/* Vùng 1: Ảnh Story Card - Đổi thành tỷ lệ ngang aspect-[3/2] hoặc aspect-[16/9] */}
+      {/* Vùng 1: Ảnh Story Card */}
       <div className="aspect-[3/2] relative overflow-hidden bg-black flex-grow"> 
         <img 
           src={finalImageUrl} 
@@ -30,7 +30,7 @@ const StoryCardItem = ({ card }) => {
           }}
         />
         
-        {/* Icon Type (Hình tròn/vuông nhỏ) hiển thị ở góc trái thay cho Text */}
+        {/* Icon Type */}
         {typeImagePath && (
           <div className="absolute top-2 left-2 w-8 h-8 sm:w-10 sm:h-10 z-10 drop-shadow-lg bg-black/40 rounded-full p-1 border border-gray-500/50">
             <img 
