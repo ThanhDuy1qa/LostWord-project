@@ -9,7 +9,7 @@ frontend/src/data/
 .env.local
 backend/.env
 frontend/.env
-
+*.sql
 # 3. Thư mục build (Code sau khi đóng gói)
 dist/
 build/
