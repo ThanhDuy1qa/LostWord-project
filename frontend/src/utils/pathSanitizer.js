@@ -13,5 +13,6 @@ export const sanitizePathString = (str) => {
     .replaceAll('>', '_gt_')
     .replaceAll('*', '_star_')
     .replaceAll('"', '_quote_')
-    .replaceAll('|', '_pipe_');
+    .replaceAll('|', '_pipe_')
+    .replaceAll('/', '_slash_');
 };

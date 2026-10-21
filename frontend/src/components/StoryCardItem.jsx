@@ -1,22 +1,20 @@
 import { memo } from 'react';
-// 🌟 1. Import hàm helper xử lý ảnh StoryCard
+import { Link } from 'react-router-dom'; // 🌟 1. Import thẻ Link từ react-router-dom
 import { getStoryCardImageUrl } from '../utils/storyCardUtils';
 
 const StoryCardItem = ({ card }) => {
   if (!card) return null;
 
-  // 🌟 2. Thay thế logic cũ bằng hàm helper (tự động gắn .webp và xử lý dấu #)
   const finalImageUrl = getStoryCardImageUrl(card.image_url);
-
-  // Xử lý đường dẫn ảnh Type (Loại: Bamboo, Orchid, Chrysanthemum, Plum)
   const typeImagePath = card.type ? encodeURI(`/image/type/${card.type.trim()}.png`) : "";
-
-  // Tạo dải sao tương ứng với Rarity
   const stars = Array(card.rarity || 0).fill('★').join('');
 
   return (
-    <div className="rounded-xl overflow-hidden border-2 border-gray-600 hover:border-yellow-500 transition-all duration-300 relative flex flex-col shadow-lg shadow-black/60 group">
-      
+    /* 🌟 2. Thay <div> ngoài cùng thành thẻ <Link> hướng đến /storycard/:id */
+    <Link 
+      to={`/storycard/${card.storycard_id}`} 
+      className="rounded-xl overflow-hidden border-2 border-gray-600 hover:border-yellow-500 transition-all duration-300 relative flex flex-col shadow-lg shadow-black/60 group block cursor-pointer"
+    >
       {/* Vùng 1: Ảnh Story Card */}
       <div className="aspect-[3/2] relative overflow-hidden bg-black flex-grow"> 
         <img 
@@ -58,8 +56,7 @@ const StoryCardItem = ({ card }) => {
           {card.name}
         </h3>
       </div>
-
-    </div>
+    </Link>
   );
 };
 

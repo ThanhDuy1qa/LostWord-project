@@ -11,7 +11,7 @@ export const useStoryCards = () => {
       try {
         setLoading(true);
         // Lưu ý: Bạn cần tạo API /api/storycards ở Backend nhé
-        const res = await axios.get('http://localhost:5000/api/storycards');
+        const res = await axios.get('${API_BASE_URL}/storycards');
         setCards(res.data);
       } catch (err) {
         console.error("Lỗi lấy dữ liệu Story Card:", err);

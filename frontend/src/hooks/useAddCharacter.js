@@ -1,6 +1,7 @@
 // src/hooks/useAddCharacter.js
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { API_BASE_URL } from '../config/api';
 
 export const useAddCharacter = () => {
   const [formData, setFormData] = useState({
@@ -8,24 +9,32 @@ export const useAddCharacter = () => {
   });
   const [message, setMessage] = useState('');
 
+  // State cho danh sách độ hiếm lấy từ DB
+  const [rarityList, setRarityList] = useState([]);
+
   // State cho gợi ý tên
   const [l1Names, setL1Names] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
-  // Lấy danh sách tên nhân vật L1 từ DB
+  // Lấy danh sách tên nhân vật L1 & Danh sách Rarity từ DB
   useEffect(() => {
-    const fetchFriends = async () => {
+    const fetchData = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/friends');
-        const l1Chars = response.data
+        // 1. Lấy danh sách nhân vật
+        const friendRes = await axios.get(`${API_BASE_URL}/friends`);
+        const l1Chars = friendRes.data
           .filter(f => f.universe === 'L1')
           .map(f => f.name);
         setL1Names([...new Set(l1Chars)]);
+
+        // 2. Lấy danh sách Rarity (Sửa lại URL API của bạn nếu khác)
+        const rarityRes = await axios.get(`${API_BASE_URL}/friends/rarities`);
+        setRarityList(rarityRes.data);
       } catch (error) {
-        console.error("Lỗi lấy danh sách nhân vật L1:", error);
+        console.error("Lỗi lấy dữ liệu từ DB:", error);
       }
     };
-    fetchFriends();
+    fetchData();
   }, []);
 
   const handleChange = (e) => {
@@ -55,11 +64,10 @@ export const useAddCharacter = () => {
     setShowSuggestions(false);
   };
 
-  // 🌟 Hàm xử lý gửi Form (handleSubmit)
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post('http://localhost:5000/api/friends', formData);
+      await axios.post(`${API_BASE_URL}/friends`, formData);
       setMessage('✅ Thêm Nhân Vật thành công!');
       setFormData({ name: '', rarity_code: 'GENERAL', universe: 'L1', role: 'Attack', image_url: '/image/friend/' });
     } catch (error) {
@@ -68,13 +76,12 @@ export const useAddCharacter = () => {
     }
   };
 
-  // Lọc tên theo từ khóa gõ
   const filteredNames = l1Names.filter(name => 
     name.toLowerCase().includes(formData.name.toLowerCase())
   );
 
   return { 
-    formData, message, showSuggestions, filteredNames,
+    formData, message, showSuggestions, filteredNames, rarityList,
     setShowSuggestions, handleChange, handleSelectName, handleSubmit 
   };
 };

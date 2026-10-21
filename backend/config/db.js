@@ -1,13 +1,16 @@
 require('dotenv').config();
-const mysql = require('mysql2/promise'); // Quay lại dùng mysql2
+const mysql = require('mysql2/promise');
 
 const pool = mysql.createPool({
-  host: process.env.DB_HOST || 'localhost',
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '1Qa1Qa!!', 
-  database: process.env.DB_NAME || 'lostword',
-  connectionLimit: 10
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT || 20096, // Bắt buộc phải có port của Aiven (20096)
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+    ssl: {
+        rejectUnauthorized: false // Bắt buộc đối với Aiven MySQL
+    },
+    connectionLimit: 10
 });
 
-// Xuất trực tiếp pool ra (không dùng Object bọc ngoài nữa)
 module.exports = pool;

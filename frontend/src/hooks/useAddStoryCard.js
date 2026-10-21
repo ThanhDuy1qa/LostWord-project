@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import scrapedCards from '../data/scraped_cards.json';
 import { sanitizePathString } from '../utils/pathSanitizer';
-
+import { API_BASE_URL } from '../config/api';
 export const useAddStoryCard = () => {
   const [formData, setFormData] = useState({
     name: '',
@@ -40,7 +40,7 @@ export const useAddStoryCard = () => {
       { ...emptyEffect }
     ]);
 
-    axios.get('http://localhost:5000/api/storycards/dictionary/effects')
+    axios.get(`${API_BASE_URL}/storycards/dictionary/effects`)
       .then(res => setEffectDict(res.data))
       .catch(err => console.error(err));
   }, []);
@@ -197,7 +197,7 @@ export const useAddStoryCard = () => {
       ].filter(eff => eff.effect_code !== '');
 
       const payload = { ...formData, effects: allEffectsPayload, stats: statsPayload };
-      await axios.post('http://localhost:5000/api/storycards', payload);
+      await axios.post(`${API_BASE_URL}/storycards`, payload);
 
       setMessage('✅ Thêm Story Card thành công!');
       setFormData({ name: '', rarity: 5, type: '', image_url: '/image/storycard/' });

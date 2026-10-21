@@ -1,7 +1,8 @@
+// src/hooks/useEditCharacter.js
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-
+import { API_BASE_URL } from '../config/api';
 export const useEditCharacter = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -12,6 +13,9 @@ export const useEditCharacter = () => {
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(true);
   
+  // State cho danh sách độ hiếm lấy từ DB
+  const [rarityList, setRarityList] = useState([]);
+
   const [allFriendsList, setAllFriendsList] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(-1);
   const [l1Names, setL1Names] = useState([]); 
@@ -24,9 +28,16 @@ export const useEditCharacter = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const response = await axios.get('http://localhost:5000/api/friends'); 
-        const allFriends = response.data;
+
+        // 1. Gọi song song cả 2 API: Friends và Rarities
+        const [friendsRes, rarityRes] = await Promise.all([
+          axios.get(`${API_BASE_URL}/friends`),
+          axios.get(`${API_BASE_URL}/friends/rarities`) // Sửa lại URL API của bạn nếu khác
+        ]);
+
+        const allFriends = friendsRes.data;
         setAllFriendsList(allFriends);
+        setRarityList(rarityRes.data);
 
         const l1Chars = allFriends.filter(f => f.universe === 'L1').map(f => f.name);
         setL1Names([...new Set(l1Chars)]);
@@ -86,7 +97,6 @@ export const useEditCharacter = () => {
     if (name === 'name') setShowSuggestions(true);
   };
 
-  // 🌟 2. Cập nhật handleSelectName khi click chọn gợi ý tên
   const handleSelectName = (selectedName) => {
     setFormData(prev => {
       const cleanName = selectedName.trim().replace(/\s+/g, '_');
@@ -105,7 +115,7 @@ export const useEditCharacter = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.put(`http://localhost:5000/api/friends/${id}`, formData);
+      await axios.put(`${API_BASE_URL}/friends/${id}`, formData);
       setOriginalImageUrl(formData.image_url); 
 
       if (saveAction === 'next') {
@@ -130,7 +140,7 @@ export const useEditCharacter = () => {
 
   return {
     formData, message, loading, currentIndex, allFriendsList, showSuggestions,
-    originalImageUrl, saveAction, filteredNames, 
+    originalImageUrl, saveAction, filteredNames, rarityList,
     setSaveAction, setShowSuggestions, handleNavigate, handleChange, handleSelectName, handleSubmit, navigate
   };
 };

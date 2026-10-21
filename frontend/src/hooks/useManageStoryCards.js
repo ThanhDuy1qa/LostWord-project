@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { API_BASE_URL } from '../config/api';
 // 🌟 1. Import hàm chuyển đổi URL ảnh an toàn
 import { getStoryCardImageUrl } from '../utils/storyCardUtils';
 
@@ -13,7 +14,7 @@ export const useManageStoryCards = () => {
   const fetchCards = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:5000/api/storycards');
+      const response = await axios.get(`${API_BASE_URL}/storycards`);
       setCards(response.data);
     } catch (error) {
       setMessage('❌ Không thể tải danh sách Story Card.');
@@ -29,7 +30,7 @@ export const useManageStoryCards = () => {
   const handleDelete = async (id, name) => {
     if (window.confirm(`⚠️ Bạn có chắc chắn muốn xóa Story Card "${name}" không?`)) {
       try {
-        await axios.delete(`http://localhost:5000/api/storycards/${id}`);
+        await axios.delete(`${API_BASE_URL}/storycards/${id}`);
         setMessage(`✅ Đã xóa thẻ "${name}" thành công.`);
         fetchCards();
         setTimeout(() => setMessage(''), 3000);
@@ -47,7 +48,7 @@ export const useManageStoryCards = () => {
 
   const handleOrderBlur = async (id, newOrder) => {
     try {
-      await axios.patch(`http://localhost:5000/api/storycards/${id}/order`, { 
+      await axios.patch(`${API_BASE_URL}/storycards/${id}/order`, {
         sort_order: newOrder === '' ? 999 : (Number(newOrder) ?? 999) 
       });
     } catch (error) {

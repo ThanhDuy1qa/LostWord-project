@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { 
   getAllStoryCards, addStoryCard, updateStoryCard, updateSortOrder, deleteStoryCard,
-  getEffectDictionary, getStoryCardEffects, getStoryCardStats 
+  getEffectDictionary, getStoryCardEffects, getStoryCardStats , getStoryCardById
 } = require('../controllers/storycardController');
 
 // 1. CÁC ROUTE TĨNH PHẢI NẰM TRÊN CÙNG
@@ -11,6 +11,7 @@ router.get('/', getAllStoryCards);
 router.post('/', addStoryCard);
 
 // 2. CÁC ROUTE CÓ BIẾN /:id NẰM BÊN DƯỚI
+router.get('/:id', getStoryCardById);
 router.get('/:id/effects', getStoryCardEffects);
 router.get('/:id/stats', getStoryCardStats);
 router.put('/:id', updateStoryCard);

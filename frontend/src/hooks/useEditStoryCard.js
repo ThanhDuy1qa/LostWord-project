@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import scrapedCards from '../data/scraped_cards.json';
 import { sanitizePathString } from '../utils/pathSanitizer';
-
+import { API_BASE_URL } from '../config/api';
 export const useEditStoryCard = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -34,7 +34,7 @@ export const useEditStoryCard = () => {
   const [stat2, setStat2] = useState({ type: 'yang_atk', value: 0 });
 
   useEffect(() => {
-    axios.get('http://localhost:5000/api/storycards/dictionary/effects')
+    axios.get(`${API_BASE_URL}/storycards/dictionary/effects`)
       .then(res => setEffectDict(res.data))
       .catch(err => console.error(err));
   }, []);
@@ -120,9 +120,8 @@ export const useEditStoryCard = () => {
       try {
         setLoading(true);
         const [cardsRes, effectsRes, statsRes] = await Promise.all([
-          axios.get('http://localhost:5000/api/storycards'),
-          axios.get(`http://localhost:5000/api/storycards/${id}/effects`),
-          axios.get(`http://localhost:5000/api/storycards/${id}/stats`)
+          axios.get(`${API_BASE_URL}/storycards`),
+          axios.get(`${API_BASE_URL}/storycards/${id}/effects`), 
         ]);
 
         const allCards = cardsRes.data;
@@ -276,7 +275,7 @@ export const useEditStoryCard = () => {
       ].filter(eff => eff.effect_code !== '');
 
       const payload = { ...formData, effects: allEffectsPayload, stats: statsPayload };
-      await axios.put(`http://localhost:5000/api/storycards/${id}`, payload);
+      await axios.put(`${API_BASE_URL}/storycards/${id}`, payload);
       
       setOriginalImageUrl(formData.image_url); 
       if (saveAction === 'next') {

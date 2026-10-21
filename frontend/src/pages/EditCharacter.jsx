@@ -1,10 +1,12 @@
+// src/components/EditCharacter.jsx
+import React from 'react';
 import { getCharacterImageUrl } from '../utils/characterUtils';
 import { useEditCharacter } from '../hooks/useEditCharacter';
 
 const EditCharacter = () => {
   const {
     formData, message, loading, currentIndex, allFriendsList, showSuggestions,
-    originalImageUrl, saveAction, filteredNames,
+    originalImageUrl, saveAction, filteredNames, rarityList,
     setSaveAction, setShowSuggestions, handleNavigate, handleChange, handleSelectName, handleSubmit, navigate
   } = useEditCharacter();
 
@@ -80,19 +82,21 @@ const EditCharacter = () => {
             </div>
 
             <div className="flex gap-4">
+              {/* Chọn Rarity Code từ DB */}
               <div className="flex-1">
                 <label className="block text-gray-400 mb-1 text-sm">Độ Hiếm</label>
-                <select name="rarity_code" value={formData.rarity_code} onChange={handleChange}
-                  className="w-full bg-[#0f0f12] border border-gray-600 rounded p-2 focus:border-[#419ec0] outline-none">
-                  <option value="GENERAL">General</option>
-                  <option value="FES">Festival (Fes)</option>
-                  <option value="UFES">Ultra Festival (UFes)</option>
-                  <option value="RFES">Relic Festival (RFes)</option>
-                  <option value="EPIC">Epic</option>
-                  <option value="GENIC">Genic</option>
-                  <option value="EXFes">EX Festival</option>
-                  <option value="YUKKURI">Yukkuri</option>
-                  <option value="PURE">PURE Festival</option>
+                <select 
+                  name="rarity_code" 
+                  value={formData.rarity_code} 
+                  onChange={handleChange}
+                  className="w-full bg-[#0f0f12] border border-gray-600 rounded p-2 focus:border-[#419ec0] outline-none"
+                >
+                  <option value="">-- Chọn Độ Hiếm --</option>
+                  {rarityList && rarityList.map((item) => (
+                    <option key={item.code || item.rarity_code || item.id} value={item.code || item.rarity_code}>
+                      {item.name || item.rarity_name || item.code || item.rarity_code}
+                    </option>
+                  ))}
                 </select>
               </div>
 

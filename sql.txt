@@ -1,0 +1,96 @@
+USE LostWord;
+
+-- 1. Bảng lưu Tag của Nhân vật (Youkai, Satori, New Year's,...)
+CREATE TABLE IF NOT EXISTS FriendTag (
+    friend_id INT NOT NULL,
+    tag_name VARCHAR(100) NOT NULL,
+    PRIMARY KEY (friend_id, tag_name),
+    FOREIGN KEY (friend_id) REFERENCES Friend(friend_id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 2. Bảng lưu Skill chính
+CREATE TABLE IF NOT EXISTS FriendSkill (
+    friend_id INT NOT NULL,
+    skill_index TINYINT NOT NULL, -- Skill 1, 2, 3
+    cooldown INT NOT NULL DEFAULT 0,
+    PRIMARY KEY (friend_id, skill_index),
+    FOREIGN KEY (friend_id) REFERENCES Friend(friend_id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 3. Bảng lưu từng dòng hiệu ứng của Skill
+CREATE TABLE IF NOT EXISTS FriendSkillEffect (
+    friend_id INT NOT NULL,
+    skill_index TINYINT NOT NULL,
+    effect_index TINYINT NOT NULL, -- Hiệu ứng 1, 2, 3...
+    effect_text VARCHAR(500) NOT NULL,
+    PRIMARY KEY (friend_id, skill_index, effect_index),
+    FOREIGN KEY (friend_id, skill_index) REFERENCES FriendSkill(friend_id, skill_index) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 4. Bảng lưu các dòng Ability
+CREATE TABLE IF NOT EXISTS FriendAbilityLine (
+    friend_id INT NOT NULL,
+    line_index TINYINT NOT NULL,
+    effect_text VARCHAR(500) NOT NULL,
+    PRIMARY KEY (friend_id, line_index),
+    FOREIGN KEY (friend_id) REFERENCES Friend(friend_id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 5. Bảng lưu các dòng Passive
+CREATE TABLE IF NOT EXISTS FriendPassiveLine (
+    friend_id INT NOT NULL,
+    passive_index TINYINT NOT NULL,
+    effect_text VARCHAR(500) NOT NULL,
+    PRIMARY KEY (friend_id, passive_index),
+    FOREIGN KEY (friend_id) REFERENCES Friend(friend_id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 6. Bảng lưu Spellcards & Last Word
+CREATE TABLE IF NOT EXISTS Spellcard (
+    spellcard_id INT AUTO_INCREMENT PRIMARY KEY,
+    friend_id INT NOT NULL,
+    card_index TINYINT NOT NULL, -- 1: SC1, 2: SC2, 3: Last Word
+    card_title VARCHAR(255) NOT NULL,
+    target_type VARCHAR(20) NOT NULL DEFAULT 'All',
+    UNIQUE (friend_id, card_index),
+    FOREIGN KEY (friend_id) REFERENCES Friend(friend_id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 7. Bảng lưu các hiệu ứng Pre / Post Effect của Spellcard
+CREATE TABLE IF NOT EXISTS SpellcardEffect (
+    spellcard_id INT NOT NULL,
+    effect_type ENUM('PRE', 'POST') NOT NULL, -- Pre-effect hay Post-effect
+    effect_index TINYINT NOT NULL,
+    effect_text VARCHAR(500) NOT NULL,
+    PRIMARY KEY (spellcard_id, effect_type, effect_index),
+    FOREIGN KEY (spellcard_id) REFERENCES Spellcard(spellcard_id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 8. Bảng lưu các Hàng Đạn (Bullet Lines)
+CREATE TABLE IF NOT EXISTS BulletLine (
+    bullet_id INT AUTO_INCREMENT PRIMARY KEY,
+    spellcard_id INT NOT NULL,
+    line_index TINYINT NOT NULL, -- Dòng đạn 1 -> 6
+    raw_stats VARCHAR(100),      -- "PWR 2.92 ACC 80% CRI 15% x15"
+    element VARCHAR(50),         -- Wood, Fire, Moon...
+    bullet_type VARCHAR(50),     -- Sharp, Laser, Energy...
+    UNIQUE (spellcard_id, line_index),
+    FOREIGN KEY (spellcard_id) REFERENCES Spellcard(spellcard_id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 9. Bảng lưu thuộc tính đặc biệt của từng Hàng Đạn (Properties)
+CREATE TABLE IF NOT EXISTS BulletProperty (
+    bullet_id INT NOT NULL,
+    property_index TINYINT NOT NULL,
+    property_text VARCHAR(255) NOT NULL,
+    PRIMARY KEY (bullet_id, property_index),
+    FOREIGN KEY (bullet_id) REFERENCES BulletLine(bullet_id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 10. Bảng lưu sát thương Diệt (Killers) của từng Hàng Đạn
+CREATE TABLE IF NOT EXISTS BulletKiller (
+    bullet_id INT NOT NULL,
+    killer_name VARCHAR(100) NOT NULL,
+    PRIMARY KEY (bullet_id, killer_name),
+    FOREIGN KEY (bullet_id) REFERENCES BulletLine(bullet_id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
